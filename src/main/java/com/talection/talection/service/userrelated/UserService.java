@@ -6,7 +6,13 @@ import com.talection.talection.enums.AuthProvider;
 import com.talection.talection.enums.Role;
 import com.talection.talection.exception.UserAlreadyExistsException;
 import com.talection.talection.exception.UserNotFoundException;
+import com.talection.talection.model.datasharing.StudentTeacherRelation;
+import com.talection.talection.model.testpersistance.TestSession;
+import com.talection.talection.model.userrelated.StudentProfile;
 import com.talection.talection.model.userrelated.User;
+import com.talection.talection.repository.datasharing.StudentTeacherRelationRepository;
+import com.talection.talection.repository.testpersistance.TestSessionRepository;
+import com.talection.talection.repository.userrelated.StudentProfileRepository;
 import com.talection.talection.repository.userrelated.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Service class for managing users.
@@ -24,11 +31,21 @@ public class UserService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
 
+    StudentProfileRepository studentProfileRepository;
+    TestSessionRepository testSessionRepository;
+    StudentTeacherRelationRepository studentTeacherRelationRepository;
+
     Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       StudentProfileRepository studentProfileRepository,
+                       TestSessionRepository testSessionRepository,
+                       StudentTeacherRelationRepository studentTeacherRelationRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.studentProfileRepository = studentProfileRepository;
+        this.testSessionRepository = testSessionRepository;
+        this.studentTeacherRelationRepository = studentTeacherRelationRepository;
     }
 
     /**
@@ -167,6 +184,20 @@ public class UserService {
         }
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+
+        Optional<StudentProfile> studentProfile = studentProfileRepository.findById(user.getId());
+        studentProfile.ifPresent(profile -> studentProfileRepository.delete(profile));
+
+        Collection<TestSession> sessions = testSessionRepository.findAllByUserId(user.getId());
+        if (sessions != null && !sessions.isEmpty()) {
+            testSessionRepository.deleteAll(sessions);
+        }
+
+        Collection<StudentTeacherRelation> relations = studentTeacherRelationRepository.findAllByStudentId(user.getId());
+        if (relations != null && !relations.isEmpty()) {
+            studentTeacherRelationRepository.deleteAll(relations);
+        }
+
         userRepository.delete(user);
     }
 
