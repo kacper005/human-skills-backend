@@ -1,5 +1,7 @@
 package com.talection.talection.controller.userrelated;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.talection.talection.config.GoogleTokenVerifier;
 import com.talection.talection.dto.replies.TeacherReply;
 import com.talection.talection.dto.requests.SignUpRequest;
 import com.talection.talection.dto.requests.UpdateUserRequest;
@@ -17,6 +19,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -25,11 +29,13 @@ import java.util.Objects;
 @RequestMapping("/user")
 public class UserController {
     private UserService userService;
+    private final GoogleTokenVerifier googleTokenVerifier;
 
     private final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, GoogleTokenVerifier googleTokenVerifier) {
         this.userService = userService;
+        this.googleTokenVerifier = googleTokenVerifier;
     }
 
     /**
@@ -46,38 +52,71 @@ public class UserController {
         if (signUpRequest.getRole() == Role.ADMIN) {
             return ResponseEntity.status(401).body("Unauthorized: Admin role cannot be used for sign-up");
         }
-
-        User user = new User();
-        if (signUpRequest.getAuthProvider() == AuthProvider.LOCAL) {
-            try {
-                user.setAuthProvider(AuthProvider.LOCAL);
-
-                if (signUpRequest.getRole() == Role.STUDENT || signUpRequest.getRole() == Role.TEACHER) {
-                    user.setRole(signUpRequest.getRole());
-                } else {
-                    return ResponseEntity.badRequest().body("Invalid role for sign-up");
-                }
-
-                user.setFirstName(signUpRequest.getFirstName());
-                user.setLastName(signUpRequest.getLastName());
-                user.setEmail(signUpRequest.getEmail());
-                user.setGender(signUpRequest.getGender());
-
-                Long id = userService.addUser(user, signUpRequest.getPassword());
-                logger.info("User added successfully with id: {}", id);
-                return ResponseEntity.ok(id.toString());
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body("Invalid sign-up request");
-            } catch (UserAlreadyExistsException e) {
-                logger.error("User already exists with email: {}", signUpRequest.getEmail());
-                return ResponseEntity.status(409).body("User already exists with this email");
-            }
+        if (signUpRequest.getRole() != Role.STUDENT && signUpRequest.getRole() != Role.TEACHER) {
+            return ResponseEntity.badRequest().body("Invalid role for sign-up");
+        }
+        if (signUpRequest.getAuthProvider() == null) {
+            return ResponseEntity.badRequest().body("Authentication provider must not be null");
         }
 
-        logger.error("Unsupported authentication provider: {}", signUpRequest.getAuthProvider());
-        return ResponseEntity.badRequest().body("Unsupported authentication provider");
+        try {
+            return switch (signUpRequest.getAuthProvider()) {
+                case LOCAL -> ResponseEntity.ok(addLocalUser(signUpRequest).toString());
+                case GOOGLE -> ResponseEntity.ok(addGoogleUser(signUpRequest).toString());
+                case FEIDE -> ResponseEntity.status(501).body("FEIDE authentication is not implemented yet");
+            };
+        } catch (UserAlreadyExistsException e) {
+            logger.error("User already exists with email: {}", signUpRequest.getEmail());
+            return ResponseEntity.status(409).body("User already exists with this email");
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid sign-up request: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (GeneralSecurityException | IOException e) {
+            logger.error("Error verifying Google ID token: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Invalid Google ID token");
+        }
     }
 
+    private Long addLocalUser(SignUpRequest request) throws UserAlreadyExistsException {
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password is required for local sign-up");
+        }
+
+        User user = buildBaseUser(request);
+        user.setAuthProvider(AuthProvider.LOCAL);
+        user.setCredentialId(null); // No credential ID for local users
+
+        return userService.addUser(user, request.getPassword());
+    }
+
+    private Long addGoogleUser(SignUpRequest request)
+            throws UserAlreadyExistsException, GeneralSecurityException, IOException {
+                if (request.getIdToken() == null || request.getIdToken().isBlank()) {
+                    throw new IllegalArgumentException("ID token is required for Google sign-up");
+                }
+
+                GoogleIdToken.Payload payload = googleTokenVerifier.verifyToken(request.getIdToken());
+
+                User user = buildBaseUser(request);
+                user.setAuthProvider(AuthProvider.GOOGLE);
+                user.setCredentialId(payload.getSubject()); // Use Google user ID as credential ID
+
+                if (user.getEmail() == null || user.getEmail().isBlank()) {
+                    user.setEmail(payload.getEmail()); // Fallback to email from token if not provided in request
+                }
+
+                return userService.addUser(user, null); // No password for Google users
+            }
+
+            private User buildBaseUser(SignUpRequest request) {
+                User user = new User();
+                user.setRole(request.getRole());
+                user.setFirstName(request.getFirstName());
+                user.setLastName(request.getLastName());
+                user.setEmail(request.getEmail());
+                user.setGender(request.getGender());
+                return user;
+            }
     /**
      * Endpoint to retrieve the current user's details.
      *

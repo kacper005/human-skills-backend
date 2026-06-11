@@ -41,7 +41,7 @@ public class SignUpRequest {
         return this.gender;
     }
 
-    private void setAuthProvider(AuthProvider authProvider) {
+    public void setAuthProvider(AuthProvider authProvider) {
         this.authProvider = authProvider;
     }
 

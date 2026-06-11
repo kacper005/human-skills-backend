@@ -56,9 +56,15 @@ public class UserService {
      * @throws UserAlreadyExistsException if a user with the same email or google ID already exists
      */
     public Long addUser(User user, String password) throws UserAlreadyExistsException {
-        if (password == null || password.isEmpty() || user == null) {
-            logger.error("Invalid user or password provided");
-            throw new IllegalArgumentException("User and password must not be null or empty");
+
+        if (user == null) {
+            logger.error("User must not be null");
+            throw new IllegalArgumentException("User must not be null");
+        }
+
+        if (user.getAuthProvider() == null) {
+            logger.error("Auth provider must not be null");
+            throw new IllegalArgumentException("Auth provider must not be null");
         }
 
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
@@ -68,17 +74,50 @@ public class UserService {
 
         if (user.getCredentialId() != null && userRepository.findByCredentialId(user.getCredentialId()).isPresent()) {
             logger.error("User with Google ID {} already exists", user.getCredentialId());
-            throw new UserAlreadyExistsException("User with the same email or Google ID already exists");
+            throw new UserAlreadyExistsException("User with the same email or google ID already exists");
         }
 
         if (user.getAuthProvider() == AuthProvider.LOCAL) {
+            if (password == null || password.isBlank()) {
+                logger.error("Password must not be null or empty for local users");
+                throw new IllegalArgumentException("Password must not be null or empty for local users");
+            }
             user.setPassword(passwordEncoder.encode(password));
+            user.setCredentialId(null); // No credential ID for local users
         } else {
+            if (user.getCredentialId() == null || user.getCredentialId().isBlank()) {
+                logger.error("Credential ID must not be null or empty for OAuth users");
+                throw new IllegalArgumentException("Credential ID must not be null or empty for OAuth users");
+            }
             user.setPassword(null); // No password for OAuth users
         }
 
         userRepository.save(user);
         return user.getId();
+
+        // if (password == null || password.isEmpty() || user == null) {
+        //     logger.error("Invalid user or password provided");
+        //     throw new IllegalArgumentException("User and password must not be null or empty");
+        // }
+
+        // if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+        //     logger.error("User with email {} already exists", user.getEmail());
+        //     throw new UserAlreadyExistsException("User with the same email or Google ID already exists");
+        // }
+
+        // if (user.getCredentialId() != null && userRepository.findByCredentialId(user.getCredentialId()).isPresent()) {
+        //     logger.error("User with Google ID {} already exists", user.getCredentialId());
+        //     throw new UserAlreadyExistsException("User with the same email or Google ID already exists");
+        // }
+
+        // if (user.getAuthProvider() == AuthProvider.LOCAL) {
+        //     user.setPassword(passwordEncoder.encode(password));
+        // } else {
+        //     user.setPassword(null); // No password for OAuth users
+        // }
+
+        // userRepository.save(user);
+        // return user.getId();
     }
 
     /**
@@ -130,7 +169,7 @@ public class UserService {
             throw new IllegalArgumentException("Google ID must not be null or empty");
         }
         User user = userRepository.findByCredentialId(credentialId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with Google ID: " + credentialId));
+            .orElseThrow(() -> new UserNotFoundException("User not found with Google ID: " + credentialId));
 
         return user.getRole();
     }
