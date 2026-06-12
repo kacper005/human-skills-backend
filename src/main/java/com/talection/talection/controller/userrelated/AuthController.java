@@ -2,6 +2,8 @@ package com.talection.talection.controller.userrelated;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.talection.talection.config.GoogleTokenVerifier;
+import com.talection.talection.config.FeideTokenVerifier;
+import org.springframework.security.oauth2.jwt.Jwt;
 import com.talection.talection.config.JwtUtil;
 import com.talection.talection.dto.requests.AuthenticationRequest;
 import com.talection.talection.enums.AuthProvider;
@@ -38,6 +40,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final FeideTokenVerifier feideTokenVerifier;
 
     private final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
@@ -45,12 +48,14 @@ public class AuthController {
             UserDetailsServiceImplementation userDetailsService,
             JwtUtil jwtUtil,
             AuthenticationManager authenticationManager,
-            GoogleTokenVerifier googleTokenVerifier
+            GoogleTokenVerifier googleTokenVerifier,
+            FeideTokenVerifier feideTokenVerifier
     ) {
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.feideTokenVerifier = feideTokenVerifier;
     }
 
     /**
@@ -109,7 +114,21 @@ public class AuthController {
         }
 
         if (request.getAuthProvider() == AuthProvider.FEIDE) {
-            return new ResponseEntity<>("FEIDE authentication is not implemented yet", HttpStatus.NOT_IMPLEMENTED);
+            try {
+                    return ResponseEntity.ok(authenticateFeide(request));
+                } catch (IllegalArgumentException e) {
+                    logger.error("Invalid FEIDE token: {}", e.getMessage());
+                    return new ResponseEntity<>("Invalid FEIDE ID token", HttpStatus.BAD_REQUEST);
+                } catch (IllegalStateException e) {
+                    logger.error("FEIDE auth configuration error: {}", e.getMessage());
+                    return new ResponseEntity<>("FEIDE auth is not configured", HttpStatus.INTERNAL_SERVER_ERROR);
+                } catch (UserNotFoundException e) {
+                    logger.error("User not found for FEIDE token");
+                    return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+                } catch (Exception e) {
+                    logger.error("Error during FEIDE authentication: {}", e.getMessage());
+                    return new ResponseEntity<>("Error during FEIDE authentication", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
         }
 
         return ResponseEntity.badRequest().body("Unsupported AuthProvider");
@@ -182,6 +201,29 @@ public class AuthController {
         UserDetails userDetails = userDetailsService.loadUserByUsername(payload.getEmail());
         if (userDetails == null) {
             throw new UserNotFoundException("User not found with email: " + payload.getEmail());
+        }
+
+        return jwtUtil.generateToken(userDetails);
+    }
+
+    private String authenticateFeide(AuthenticationRequest request) {
+        if (request.getCredentialId() == null || request.getCredentialId().isBlank()) {
+            throw new IllegalArgumentException("FEIDE ID token must not by null or empty");
+        }
+
+        Jwt jwt = feideTokenVerifier.verifyToken(request.getCredentialId());
+
+        String email = jwt.getClaimAsString("email"); 
+        if (email == null || email.isBlank()) {
+            email = jwt.getClaimAsString("preferred_username");
+        }
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("FEIDE token email is missing");
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        if (userDetails == null) {
+            throw new UserNotFoundException("User not found with email: " + email);
         }
 
         return jwtUtil.generateToken(userDetails);

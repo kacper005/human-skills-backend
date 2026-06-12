@@ -2,6 +2,7 @@ package com.talection.talection.controller.userrelated;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.talection.talection.config.GoogleTokenVerifier;
+import com.talection.talection.config.FeideTokenVerifier;
 import com.talection.talection.dto.replies.TeacherReply;
 import com.talection.talection.dto.requests.SignUpRequest;
 import com.talection.talection.dto.requests.UpdateUserRequest;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -30,12 +32,14 @@ import java.util.Objects;
 public class UserController {
     private UserService userService;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final FeideTokenVerifier feideTokenVerifier;
 
     private final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    public UserController(UserService userService, GoogleTokenVerifier googleTokenVerifier) {
+    public UserController(UserService userService, GoogleTokenVerifier googleTokenVerifier, FeideTokenVerifier feideTokenVerifier) {
         this.userService = userService;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.feideTokenVerifier = feideTokenVerifier;
     }
 
     /**
@@ -63,7 +67,7 @@ public class UserController {
             return switch (signUpRequest.getAuthProvider()) {
                 case LOCAL -> ResponseEntity.ok(addLocalUser(signUpRequest).toString());
                 case GOOGLE -> ResponseEntity.ok(addGoogleUser(signUpRequest).toString());
-                case FEIDE -> ResponseEntity.status(501).body("FEIDE authentication is not implemented yet");
+                case FEIDE -> ResponseEntity.ok(addFeideUser(signUpRequest).toString());
             };
         } catch (UserAlreadyExistsException e) {
             logger.error("User already exists with email: {}", signUpRequest.getEmail());
@@ -116,6 +120,34 @@ public class UserController {
                 user.setEmail(request.getEmail());
                 user.setGender(request.getGender());
                 return user;
+            }
+
+    private Long addFeideUser(SignUpRequest request)
+            throws UserAlreadyExistsException {
+                if (request.getIdToken() == null || request.getIdToken().isBlank()) {
+                    throw new IllegalArgumentException("ID token is required for FEIDE sign-up");
+                }
+
+                Jwt jwt = feideTokenVerifier.verifyToken(request.getIdToken());
+
+                String subject = jwt.getSubject();
+                if (subject == null || subject.isBlank()) {
+                    throw new IllegalArgumentException("FEIDE ID token subject is missing");
+                }
+
+                User user = buildBaseUser(request);
+                user.setAuthProvider(AuthProvider.FEIDE);
+                user.setCredentialId(subject);
+
+                if (user.getEmail() == null || user.getEmail().isBlank()) {
+                    String tokenEmail = jwt.getClaimAsString("email");
+                    if (tokenEmail == null || tokenEmail.isBlank()) {
+                        tokenEmail = jwt.getClaimAsString("preferred_username");
+                    }
+                    user.setEmail(tokenEmail);
+                }
+
+                return userService.addUser(user, null);
             }
     /**
      * Endpoint to retrieve the current user's details.
