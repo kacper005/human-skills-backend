@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Date;
 
+@Entity
 public class GameSession {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,8 +23,8 @@ public class GameSession {
   @NotNull
   private Date completedAt;
 
-  @NotNull
-  private Integer score;
+  @Column(columnDefinition = "jsonb")
+  private String score;
 
   // Getters and setters
 
@@ -68,8 +69,17 @@ public class GameSession {
    * 
    * @return the score of the game session
    */
-  public Integer getScore() {
+  public String getScore() {
     return score;
+  }
+
+  /**
+   * Gets the ID of the game template associated with the game session.
+   * 
+   * @return the ID of the game template
+   */
+  public Long getGameTemplateId() {
+    return gameTemplateId;
   }
 
   /**
@@ -113,7 +123,16 @@ public class GameSession {
    * 
    * @param score the score of the game session
    */
-  public void setScore(Integer score) {
+  public void setScore(String score) {
     this.score = score;
+  }
+
+  /**
+   * Sets the ID of the game template associated with the game session.
+   * 
+   * @param gameTemplateId the ID of the game template
+   */
+  public void setGameTemplateId(Long gameTemplateId) {
+    this.gameTemplateId = gameTemplateId;
   }
 }

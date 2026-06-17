@@ -12,6 +12,7 @@ public class GameTemplate {
   private Long id;
 
   @NotBlank
+  @Column(name = "game_name")
   private String name;
 
   private String description;
