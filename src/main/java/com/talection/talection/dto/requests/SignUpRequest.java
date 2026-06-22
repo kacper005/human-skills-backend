@@ -5,7 +5,6 @@ import com.talection.talection.enums.Gender;
 import com.talection.talection.enums.Role;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.Date;
 
 /**
  * Data Transfer Object for user sign-up requests.

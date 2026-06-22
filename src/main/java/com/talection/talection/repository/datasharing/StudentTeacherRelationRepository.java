@@ -1,7 +1,6 @@
 package com.talection.talection.repository.datasharing;
 
 import com.talection.talection.model.datasharing.StudentTeacherRelation;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

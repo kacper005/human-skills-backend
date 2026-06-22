@@ -10,19 +10,14 @@ import com.talection.talection.model.testpersistance.TestSession;
 import com.talection.talection.model.tests.TestOption;
 import com.talection.talection.model.tests.TestQuestion;
 import com.talection.talection.model.tests.TestTemplate;
-import com.talection.talection.model.userrelated.StudyProgram;
 import com.talection.talection.model.userrelated.User;
 import com.talection.talection.repository.datasharing.StudentTeacherRelationRepository;
 import com.talection.talection.repository.testpersistance.TestChoiceRepository;
 import com.talection.talection.repository.testpersistance.TestSessionRepository;
 import com.talection.talection.repository.tests.TestTemplateRepository;
-import com.talection.talection.repository.userrelated.UserRepository;
-import com.talection.talection.service.datasharing.StudentTeacherRelationService;
 import com.talection.talection.service.tests.TestOptionService;
 import com.talection.talection.service.tests.TestQuestionService;
-import com.talection.talection.service.userrelated.StudyProgramService;
 import com.talection.talection.service.userrelated.UserService;
-import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -155,7 +150,7 @@ public class TestSessionService {
      * @param id the ID of the test session to retrieve
      * @return the formatted test session reply
      * @throws IllegalArgumentException if the id is null
-     * @throws  if the test session does not exist
+     * @throws TestSessionNotFoundException if the test session does not exist
      */
     public TestSessionReply getTestSessionReplyById(Long id) {
         if (id == null) {

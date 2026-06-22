@@ -1,6 +1,5 @@
 package com.talection.talection.dto.requests;
 
-import com.talection.talection.enums.StudyLevel;
 
 /**
  * DTO for adding a student profile.

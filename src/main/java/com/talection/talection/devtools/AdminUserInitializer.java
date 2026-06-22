@@ -1,6 +1,5 @@
 package com.talection.talection.devtools;
 
-import com.talection.talection.controller.userrelated.UserController;
 import com.talection.talection.enums.AuthProvider;
 import com.talection.talection.enums.Gender;
 import com.talection.talection.enums.Role;

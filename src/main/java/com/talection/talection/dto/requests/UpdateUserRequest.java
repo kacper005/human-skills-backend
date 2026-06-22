@@ -1,8 +1,12 @@
 package com.talection.talection.dto.requests;
 
 import com.talection.talection.enums.Gender;
-import jakarta.validation.constraints.NotNull;
 
+/**
+ * Data Transfer Object for updating user information.
+ * This class encapsulates the necessary information
+ * for updating an existing user's profile in the application.
+ */
 public class UpdateUserRequest {
     private String firstName;
     private String lastName;
