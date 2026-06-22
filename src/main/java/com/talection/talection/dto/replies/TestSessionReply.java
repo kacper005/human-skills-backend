@@ -1,8 +1,6 @@
 package com.talection.talection.dto.replies;
 
 import com.talection.talection.enums.Role;
-import com.talection.talection.model.testpersistance.TestChoice;
-
 import java.util.Date;
 import java.util.List;
 
