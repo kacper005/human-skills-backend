@@ -1,14 +1,12 @@
 package com.talection.talection.model.userrelated;
 
-import com.talection.talection.enums.StudyLevel;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
  * Represents a student's profile in the system.
- * Contains information about the student's study level, field of study, and year of study.
+ * Contains information about the student's study program and year of study.
  */
 @Entity
 public class StudentProfile {
@@ -25,7 +23,9 @@ public class StudentProfile {
     }
 
     /**
-     * The field of study for the student (e.g., Computer Science, Mathematics).
+     * Sets the ID of the study program for the student.
+     *
+     * @param studyProgramId the study program ID to set
      */
     public void setStudyProgramId(Long studyProgramId) {
         this.studyProgramId = studyProgramId;
@@ -43,7 +43,7 @@ public class StudentProfile {
     /**
      * Sets the ID of the student profile.
      *
-     * @param id the users id
+     * @param id the user's id
      */
     public void setId(Long id) {
         this.id = id;

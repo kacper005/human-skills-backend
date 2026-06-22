@@ -1,6 +1,5 @@
 package com.talection.talection.model.datasharing;
 
-import com.talection.talection.model.testpersistance.TestSession;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 

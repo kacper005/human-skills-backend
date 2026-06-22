@@ -1,6 +1,5 @@
 package com.talection.talection.model.userrelated;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.talection.talection.enums.Campus;
 import com.talection.talection.enums.StudyLevel;
 import jakarta.persistence.Entity;

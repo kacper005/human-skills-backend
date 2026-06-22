@@ -6,7 +6,6 @@ import com.talection.talection.enums.Gender;
 import com.talection.talection.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
