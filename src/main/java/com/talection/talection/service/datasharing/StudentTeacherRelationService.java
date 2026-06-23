@@ -89,8 +89,9 @@ public class StudentTeacherRelationService {
         }
 
         // Check if the test session exists
-        if (testSessionService.getTestSessionReplyById(testSessionId) == null) {
-            throw new IllegalArgumentException("Test session with ID " + testSessionId + " does not exist");
+        TestSessionReply sessionReply = testSessionService.getTestSessionReplyById(testSessionId);
+        if (!studentId.equals(sessionReply.getUserId())) {
+            throw new IllegalArgumentException("Test session with ID " + testSessionId + " does not belong to student with ID " + studentId);
         }
 
         // Check if the student and teacher exist
