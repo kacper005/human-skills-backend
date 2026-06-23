@@ -54,15 +54,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        // Allow only GET requests
                         .requestMatchers(
-                                HttpMethod.GET, "/test/get-all", "/test/get/{id}", "/test/get-by-test-type/{testType}", "/testsessions/evaluate"
-
+                                HttpMethod.GET, "/test/get-all", "/test/get/{id}", "/test/get-by-test-type/{testType}"
                         ).permitAll()
-                        .requestMatchers(
-                                HttpMethod.POST, "/testsessions/evaluate"
-                        ).permitAll()
-                        // Allow all requests
                         .requestMatchers("/user/add", "/authenticate"
                         ).permitAll()
                         .anyRequest().authenticated())

@@ -140,7 +140,7 @@ public class TestSessionService {
             throw new UserNotFoundException("User not found with id: " + userId);
         }
         return testSessionRepository.findAllByUserId(userId).stream()
-                .map(this::convertToReply)
+                .map(this::convertToReplyWithUser)
                 .toList();
     }
 
@@ -158,7 +158,7 @@ public class TestSessionService {
         }
         TestSession testSession = testSessionRepository.findById(id)
                 .orElseThrow(() -> new TestSessionNotFoundException("TestSession not found with id: " + id));
-        return convertToReply(testSession);
+        return convertToReplyWithUser(testSession);
     }
 
     /**
@@ -213,17 +213,30 @@ public class TestSessionService {
         reply.setChoices(choiceReplies);
 
         reply.setScore(score);
-        reply.setUserId(testSession.getUserId());
+        // reply.setUserId(testSession.getUserId());
 
-        if (testSession.getUserId() != null) {
-            User user = userService.getUserById(testSession.getUserId());
-            reply.setUserEmail(user.getEmail());
-            reply.setUserRole(user.getRole());
-        }
+        // userEmail and userRole are only populated for authenticated calls (addTestSession path).
+        // evaluateTestSession is public, never expose PII there.
+        // if (testSession.getUserId() != null) {
+        //     User user = userService.getUserById(testSession.getUserId());
+        //     reply.setUserEmail(user.getEmail());
+        //     reply.setUserRole(user.getRole());
+        // }
 
 
         reply.setTestDescription(testTemplate.getDescription());
 
+        return reply;
+    }
+
+    private TestSessionReply convertToReplyWithUser(TestSession testSession) {
+        TestSessionReply reply = convertToReply(testSession);
+        if (testSession.getUserId() != null) {
+            User user = userService.getUserById(testSession.getUserId());
+            reply.setUserId(user.getId());
+            reply.setUserEmail(user.getEmail());
+            reply.setUserRole(user.getRole());
+        }
         return reply;
     }
 
