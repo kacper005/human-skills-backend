@@ -21,6 +21,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import com.talection.talection.repository.userrelated.UserRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,6 +42,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final FeideTokenVerifier feideTokenVerifier;
+    private final UserRepository userRepository;
 
     private final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
@@ -49,13 +51,15 @@ public class AuthController {
             JwtUtil jwtUtil,
             AuthenticationManager authenticationManager,
             GoogleTokenVerifier googleTokenVerifier,
-            FeideTokenVerifier feideTokenVerifier
+            FeideTokenVerifier feideTokenVerifier,
+            UserRepository userRepository
     ) {
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
         this.googleTokenVerifier = googleTokenVerifier;
         this.feideTokenVerifier = feideTokenVerifier;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -198,10 +202,12 @@ public class AuthController {
             throw new IllegalArgumentException("Invalid Google ID token payload");
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(payload.getEmail());
-        if (userDetails == null) {
-            throw new UserNotFoundException("User not found with email: " + payload.getEmail());
-        }
+        String credentialId = "google:" +payload.getSubject();
+        UserDetails userDetails = userDetailsService.loadUserByUsername(
+            userRepository.findByCredentialId(credentialId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with Google ID: " + credentialId))
+                .getEmail()
+        );
 
         return jwtUtil.generateToken(userDetails);
     }
@@ -221,10 +227,12 @@ public class AuthController {
             throw new IllegalArgumentException("FEIDE token email is missing");
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        if (userDetails == null) {
-            throw new UserNotFoundException("User not found with email: " + email);
-        }
+        String credentialId = "feide:" + jwt.getSubject();
+        UserDetails userDetails = userDetailsService.loadUserByUsername(
+            userRepository.findByCredentialId(credentialId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with FEIDE ID: " + credentialId))
+                .getEmail()
+        );
 
         return jwtUtil.generateToken(userDetails);
     }
