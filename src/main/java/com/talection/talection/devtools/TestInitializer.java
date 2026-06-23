@@ -14,13 +14,15 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Profile;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@Profile("dev")
 public class TestInitializer implements ApplicationListener<ApplicationReadyEvent> {
-    Dotenv dotenv = Dotenv.load();
+    Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
     private final Logger logger = LoggerFactory.getLogger(TestInitializer.class);
 
     private final TestTemplateRepository testTemplateRepository;

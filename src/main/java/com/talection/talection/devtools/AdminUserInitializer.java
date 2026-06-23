@@ -11,13 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("dev")
 public class AdminUserInitializer implements ApplicationListener<ApplicationReadyEvent> {
     private final UserService userService;
-    Dotenv dotenv = Dotenv.load();
+    Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
     private final Logger logger = LoggerFactory.getLogger(AdminUserInitializer.class);
 
 
