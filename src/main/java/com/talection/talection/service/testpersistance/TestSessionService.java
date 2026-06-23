@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service for managing test sessions.
@@ -74,11 +76,25 @@ public class TestSessionService {
         }
 
         userService.getUserById(testSession.getUserId());
-        testTemplateRepository.findById(testSession.getTestTemplateId()).orElseThrow(() -> new TestTemplateNotFoundException("TestTemplate not found with id: " + testSession.getTestTemplateId()));
+        TestTemplate template = testTemplateRepository.findById(testSession.getTestTemplateId())
+        .orElseThrow(() -> new TestTemplateNotFoundException("TestTemplate not found with id: " + testSession.getTestTemplateId()));
+
+        Set<Long> validQuestionIds = template.getQuestions().stream()
+                .map(TestQuestion::getId)
+                .collect(Collectors.toSet());
 
         testSession.getChoices().forEach(choice -> {
             if (choice.getQuestionId() == null || choice.getSelectedOptionId() == null) {
                 throw new InvalidChoiceException("Choice must have a valid QuestionId and SelectedOptionId");
+            }
+            if (!validQuestionIds.contains(choice.getQuestionId())) {
+                throw new InvalidChoiceException("Question ID " + choice.getQuestionId() + " does not belong to this test template");
+            }
+            TestQuestion question = testQuestionService.findById(choice.getQuestionId());
+            boolean optionBelongsToQuestion = question.getOptions().stream()
+                    .anyMatch(opt -> opt.getId().equals(choice.getSelectedOptionId()));
+            if (!optionBelongsToQuestion) {
+                throw new InvalidChoiceException("Option ID " + choice.getSelectedOptionId() + " does not belong to question ID " + choice.getQuestionId());
             }
             testChoiceRepository.save(choice);
         });
