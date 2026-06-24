@@ -71,7 +71,7 @@ public class TestSessionService {
         if (testSession.getStartTime() == null || testSession.getEndTime() == null) {
             throw new IllegalArgumentException("StartTime and EndTime must not be null");
         }
-        if (testSession.getChoices().isEmpty() || testSession.getChoices() == null) {
+        if (testSession.getChoices() == null || testSession.getChoices().isEmpty()) {
             throw new IllegalArgumentException("Choices must not be empty or null");
         }
 
