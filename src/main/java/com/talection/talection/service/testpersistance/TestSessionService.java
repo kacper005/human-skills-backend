@@ -121,6 +121,10 @@ public class TestSessionService {
             studentTeacherRelationRepository.delete(relation);
         }
 
+        testChoiceRepository.deleteAll(testSession.getChoices());
+
+        testSessionRepository.delete(testSession);
+
         testSessionRepository.delete(testSession);
     }
 
