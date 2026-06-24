@@ -157,13 +157,14 @@ public class TestSessionController {
      * @param id the ID of the test session to delete
      * @return ResponseEntity indicating success or failure
      */
+    @PreAuthorize("hasAnyAuthority('STUDENT', 'TEACHER', 'ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteTestSessionById(@PathVariable Long id) {
         AccessUserDetails userDetails = (AccessUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try {
             TestSessionReply reply = testSessionService.getTestSessionReplyById(id);
             if (!Objects.equals(reply.getUserId(), userDetails.getId())) {
-                logger.warn("Cannot test session with ID {}: it does not belong to the user with ID {}", id, userDetails.getId());
+                logger.warn("Cannot delete test session with ID {}: it does not belong to the user with ID {}", id, userDetails.getId());
                 return ResponseEntity.status(403).body("Cannot delete test session you do not own");
             }
             testSessionService.deleteTestSession(id);
