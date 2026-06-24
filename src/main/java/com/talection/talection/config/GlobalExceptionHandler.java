@@ -17,8 +17,8 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", Instant.now().toEpochMilli());
         response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("error", "Error");
-        response.put("message", "Internal Server Error");
-        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+        response.put("error", "Internal Server Error");
+        response.put("message", "An unexpected error occurred");
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
