@@ -14,6 +14,9 @@ import com.talection.talection.repository.datasharing.StudentTeacherRelationRepo
 import com.talection.talection.repository.testpersistance.TestSessionRepository;
 import com.talection.talection.repository.userrelated.StudentProfileRepository;
 import com.talection.talection.repository.userrelated.UserRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -216,6 +219,7 @@ public class UserService {
      * @throws IllegalArgumentException if the email is null or empty
      * @throws UserNotFoundException if the user is not found with the given email
      */
+    @Transactional
     public void deleteUserByEmail(String email) {
         if (email == null || email.isEmpty()) {
             logger.error("Email must not be null or empty");
