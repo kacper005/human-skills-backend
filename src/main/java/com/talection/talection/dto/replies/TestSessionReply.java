@@ -3,6 +3,7 @@ package com.talection.talection.dto.replies;
 import com.talection.talection.enums.Role;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Data Transfer Object for test session replies.
@@ -21,6 +22,7 @@ public class TestSessionReply {
     private Date endTime;
     private List<TestChoiceReply> choices;
     private int score;
+    private Map<String, Double> traitScores; // Map of trait names to their corresponding scores
 
     /**
      * Returns the ID of the test session.
@@ -198,5 +200,23 @@ public class TestSessionReply {
      */
     public void setScore(int score) {
         this.score = score;
+    }
+
+    /**
+     * Gets the trait scores for the test session.
+     *
+     * @return the map of trait names to their corresponding scores
+     */
+    public Map<String, Double> getTraitScores() {
+        return traitScores;
+    }
+
+    /**
+     * Sets the trait scores for the test session.
+     *
+     * @param traitScores the map of trait names to their corresponding scores
+     */
+    public void setTraitScores(Map<String, Double> traitScores) {
+        this.traitScores = traitScores;
     }
 }
