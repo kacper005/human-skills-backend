@@ -3,6 +3,7 @@ package com.talection.talection.service.testpersistance;
 import com.talection.talection.dto.replies.TestChoiceReply;
 import com.talection.talection.dto.replies.TestSessionReply;
 import com.talection.talection.enums.TestOptionType;
+import com.talection.talection.enums.TestType;
 import com.talection.talection.exception.*;
 import com.talection.talection.model.datasharing.StudentTeacherRelation;
 import com.talection.talection.model.testpersistance.TestChoice;
@@ -25,6 +26,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Service for managing test sessions.
@@ -122,9 +125,6 @@ public class TestSessionService {
         }
 
         testChoiceRepository.deleteAll(testSession.getChoices());
-
-        testSessionRepository.delete(testSession);
-
         testSessionRepository.delete(testSession);
     }
 
@@ -206,22 +206,26 @@ public class TestSessionService {
         if (testSession == null) {
             return null;
         }
+ 
         TestSessionReply reply = new TestSessionReply();
         reply.setId(testSession.getId());
         reply.setStartTime(testSession.getStartTime());
         reply.setEndTime(testSession.getEndTime());
+ 
         TestTemplate testTemplate = testTemplateRepository.findById(testSession.getTestTemplateId())
                 .orElseThrow(() -> new TestTemplateNotFoundException("TestTemplate not found with id: " + testSession.getTestTemplateId()));
         reply.setTestName(testTemplate.getName());
-
+        reply.setTestDescription(testTemplate.getDescription());
+ 
         ArrayList<TestChoice> choices = new ArrayList<>(testSession.getChoices());
         if (choices.isEmpty()) {
             throw new IllegalArgumentException("TestSession must have at least one choice");
         }
-
+ 
+        // Score multiple-choice and build choice replies
         int score = 0;
         ArrayList<TestChoiceReply> choiceReplies = new ArrayList<>();
-        for (int i = 0; i < testSession.getChoices().size(); i++) {
+        for (int i = 0; i < choices.size(); i++) {
             TestChoiceReply choiceReply = convertToChoiceReply(choices.get(i), i + 1);
             if (testTemplate.getOptionType() == TestOptionType.MULTIPLE_CHOICE) {
                 if (choiceReply.getAnswer().equals("Correct")) {
@@ -231,21 +235,13 @@ public class TestSessionService {
             choiceReplies.add(choiceReply);
         }
         reply.setChoices(choiceReplies);
-
         reply.setScore(score);
-        // reply.setUserId(testSession.getUserId());
-
-        // userEmail and userRole are only populated for authenticated calls (addTestSession path).
-        // evaluateTestSession is public, never expose PII there.
-        // if (testSession.getUserId() != null) {
-        //     User user = userService.getUserById(testSession.getUserId());
-        //     reply.setUserEmail(user.getEmail());
-        //     reply.setUserRole(user.getRole());
-        // }
-
-
-        reply.setTestDescription(testTemplate.getDescription());
-
+ 
+        // Big Five trait scoring — normalized to the 1.0–5.0 Likert scale
+        if (testTemplate.getTestType() == TestType.BIG_5) {
+            reply.setTraitScores(calculateTraitScores(testSession.getChoices()));
+        }
+ 
         return reply;
     }
 
@@ -260,6 +256,34 @@ public class TestSessionService {
         return reply;
     }
 
+
+    private Map<String, Double> calculateTraitScores(Collection<TestChoice> choices) {
+        Map<String, Integer> traitSums = new HashMap<>();
+        Map<String, Integer> traitCounts = new HashMap<>();
+
+        for (TestChoice choice : choices) {
+            TestQuestion question = testQuestionService.findById(choice.getQuestionId());
+            if (question.getTrait() == null) {
+                continue; // Skip if the question does not have a trait
+            }
+
+            TestOption option = testOptionService.findById(choice.getSelectedOptionId());
+            int raw = option.getAgreementLevel();
+            int adjusted = question.isReversed() ? (6 - raw) : raw; // Assuming Likert scale is 1-5, adjust for reversed questions
+
+            String trait = question.getTrait();
+            traitSums.merge(trait, adjusted, Integer::sum);
+            traitCounts.merge(trait, 1, Integer::sum);
+        }
+
+        Map<String, Double> normalizedScore = new HashMap<>();
+        for (String trait : traitSums.keySet()) {
+            double average = (double) traitSums.get(trait) / traitCounts.get(trait);
+            normalizedScore.put(trait, Math.round(average * 100.0) / 100.0); // Round to 2 decimal places
+        }
+
+        return normalizedScore;
+    }
     /**
      * Converts a TestChoice object into a TestChoiceReply object.
      *
@@ -280,28 +304,22 @@ public class TestSessionService {
         if (selectedOption == null) {
             throw new TestOptionNotFoundException("Selected option not found with id: " + choice.getSelectedOptionId());
         }
-
+ 
         TestChoiceReply reply = new TestChoiceReply();
         reply.setQuestion(question.getQuestionText());
-
+ 
         if (selectedOption.getType() == TestOptionType.LIKERT_SCALE) {
             reply.setAnswer(getLikertScaleText(selectedOption.getAgreementLevel()));
         } else if (selectedOption.getType() == TestOptionType.MULTIPLE_CHOICE) {
             List<TestOption> correctOptions = question.getCorrectOptions();
-            boolean wasCorrect = false;
-            for (TestOption option : correctOptions) {
-                if (option.getId().equals(selectedOption.getId())) {
-                    wasCorrect = true;
-                }
-            }
-
-            //TODO: Change logic if more Multiple Choice tests are added
+            boolean wasCorrect = correctOptions.stream()
+                    .anyMatch(opt -> opt.getId().equals(selectedOption.getId()));
             reply.setAnswer(wasCorrect ? "Correct" : "Incorrect");
             reply.setQuestion(questionNumber + ".");
         } else {
             throw new UnsupportedOperationException("Unsupported TestOptionType: " + selectedOption.getType());
         }
-
+ 
         return reply;
     }
 
