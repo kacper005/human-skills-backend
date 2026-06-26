@@ -5,7 +5,6 @@ import com.talection.talection.dto.requests.AddGameSessionRequest;
 import com.talection.talection.exception.GameSessionNotFoundException;
 import com.talection.talection.exception.GameTemplateNotFoundException;
 import com.talection.talection.exception.UserNotFoundException;
-import com.talection.talection.model.gamepersistance.GameSession;
 import com.talection.talection.security.AccessUserDetails;
 import com.talection.talection.service.gamepersistance.GameSessionService;
 import org.slf4j.Logger;
@@ -30,7 +29,7 @@ public class GameSessionController {
 
     @GetMapping()
     @PreAuthorize("hasAnyAuthority('STUDENT', 'TEACHER', 'ADMIN')")
-    public ResponseEntity<Collection<GameSession>> getAllGameSessionsForCurrentUser() {
+    public ResponseEntity<Collection<GameSessionReply>> getAllGameSessionsForCurrentUser() {
         AccessUserDetails userDetails = (AccessUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try {
             return ResponseEntity.ok(gameSessionService.getAllGameSessionsForUser(userDetails.getId()));
@@ -49,9 +48,9 @@ public class GameSessionController {
             Long id = gameSessionService.addGameSession(userDetails.getId(), request);
             return ResponseEntity.ok(id.toString());
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body("Invalid request");
         } catch (UserNotFoundException | GameTemplateNotFoundException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            return ResponseEntity.status(404).body("Resource not found");
         }
     }
 
@@ -85,9 +84,9 @@ public class GameSessionController {
             gameSessionService.deleteGameSession(id);
             return ResponseEntity.ok("Game session deleted successfully");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body("Invalid request");
         } catch (GameSessionNotFoundException | GameTemplateNotFoundException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            return ResponseEntity.status(404).body("Resource not found");
         }
     }
 }
