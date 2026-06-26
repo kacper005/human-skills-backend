@@ -28,6 +28,9 @@ public class TestQuestion {
     @JsonIgnore
     private List<TestOption> correctOptions;
 
+    private String trait;
+    private boolean reversed; // true when high agreement means low trait score
+
     /**
      * Default constructor for JPA.
      * This constructor is required for JPA to create instances of this entity.
@@ -106,5 +109,41 @@ public class TestQuestion {
      */
     public List<TestOption> getCorrectOptions() {
         return correctOptions;
+    }
+
+    /**
+     * Sets the trait associated with the question.
+     *
+     * @param trait the trait to set for the question
+     */
+    public void setTrait(String trait) {
+        this.trait = trait;
+    }
+
+    /**
+     * Gets the trait associated with the question.
+     *
+     * @return the trait of the question
+     */
+    public String getTrait() {
+        return trait;
+    }
+
+    /**
+     * Sets whether the question is reversed.
+     *
+     * @param reversed true if the question is reversed, false otherwise
+     */
+    public void setReversed(boolean reversed) {
+        this.reversed = reversed;
+    }
+
+    /**
+     * Checks if the question is reversed.
+     *
+     * @return true if the question is reversed, false otherwise
+     */
+    public boolean isReversed() {
+        return reversed;
     }
 }
