@@ -63,13 +63,14 @@ public class GameSessionService {
         return gameSessionRepository.save(gameSession).getId();
     }
 
-    public Collection<GameSession> getAllGameSessionsForUser(Long userId) {
+    public Collection<GameSessionReply> getAllGameSessionsForUser(Long userId) {
         if (userId == null) {
             throw new IllegalArgumentException("User ID must not be null");
         }
-
         userService.getUserById(userId);
-        return gameSessionRepository.findAllByUserId(userId);
+        return gameSessionRepository.findAllByUserId(userId).stream()
+                .map(this::toReply)
+                .toList();
     }
 
     public GameSessionReply getGameSessionById(Long id) {
