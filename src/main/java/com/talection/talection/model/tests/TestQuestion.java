@@ -29,7 +29,7 @@ public class TestQuestion {
     private List<TestOption> correctOptions;
 
     private String trait;
-    private boolean reversed; // true when high agreement means low trait score
+    private Boolean reversed; // true when high agreement means low trait score
 
     /**
      * Default constructor for JPA.
@@ -134,7 +134,7 @@ public class TestQuestion {
      *
      * @param reversed true if the question is reversed, false otherwise
      */
-    public void setReversed(boolean reversed) {
+    public void setReversed(Boolean reversed) {
         this.reversed = reversed;
     }
 
@@ -143,7 +143,7 @@ public class TestQuestion {
      *
      * @return true if the question is reversed, false otherwise
      */
-    public boolean isReversed() {
+    public Boolean isReversed() {
         return reversed;
     }
 }
