@@ -37,7 +37,7 @@ public class GameSessionService {
         if (request.getGameTemplateId() == null) {
             throw new IllegalArgumentException("Game template ID must not be null");
         }
-        if (request.getStartedAt() == null || request.getEndedAt() == null) {
+        if (request.getStartTime() == null || request.getEndTime() == null) {
             throw new IllegalArgumentException("Start and end time must not be null");
         }
         if (request.getScore() == null) {
@@ -56,8 +56,8 @@ public class GameSessionService {
         GameSession gameSession = new GameSession();
         gameSession.setUserId(userId);
         gameSession.setGameTemplateId(request.getGameTemplateId());
-        gameSession.setStartedAt(request.getStartedAt());
-        gameSession.setCompletedAt(request.getEndedAt());
+        gameSession.setStartedAt(request.getStartTime());
+        gameSession.setCompletedAt(request.getEndTime());
         gameSession.setScore(request.getScore());
 
         return gameSessionRepository.save(gameSession).getId();
@@ -105,8 +105,8 @@ public class GameSessionService {
         reply.setGameTemplateId(gameSession.getGameTemplateId());
         reply.setGameName(gameTemplate.getName());
         reply.setGameType(gameTemplate.getGameType());
-        reply.setStartedAt(gameSession.getStartedAt());
-        reply.setEndedAt(gameSession.getCompletedAt());
+        reply.setStartTime(gameSession.getStartedAt());
+        reply.setEndTime(gameSession.getCompletedAt());
         reply.setScore(gameSession.getScore());
 
         return reply;
