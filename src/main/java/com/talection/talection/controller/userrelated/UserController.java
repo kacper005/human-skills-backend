@@ -103,7 +103,7 @@ public class UserController {
 
                 User user = buildBaseUser(request);
                 user.setAuthProvider(AuthProvider.GOOGLE);
-                user.setCredentialId(payload.getSubject()); // Use Google user ID as credential ID
+                user.setCredentialId("google:" + payload.getSubject()); // Use Google user ID as credential ID
 
                 if (user.getEmail() == null || user.getEmail().isBlank()) {
                     user.setEmail(payload.getEmail()); // Fallback to email from token if not provided in request
@@ -137,7 +137,7 @@ public class UserController {
 
                 User user = buildBaseUser(request);
                 user.setAuthProvider(AuthProvider.FEIDE);
-                user.setCredentialId(subject);
+                user.setCredentialId("feide:" + subject);
 
                 if (user.getEmail() == null || user.getEmail().isBlank()) {
                     String tokenEmail = jwt.getClaimAsString("email");
