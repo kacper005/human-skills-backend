@@ -2,8 +2,11 @@ package com.talection.talection.model.gamepersistance;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.Date;
+import java.util.Map;
 
 @Entity
 public class GameSession {
@@ -23,8 +26,10 @@ public class GameSession {
   @NotNull
   private Date completedAt;
 
+  // Game-specific result values, e.g. points and accuracy
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(columnDefinition = "jsonb")
-  private String score;
+  private Map<String, Object> score;
 
   // Getters and setters
 
@@ -69,7 +74,7 @@ public class GameSession {
    * 
    * @return the score of the game session
    */
-  public String getScore() {
+  public Map<String, Object> getScore() {
     return score;
   }
 
@@ -123,7 +128,7 @@ public class GameSession {
    * 
    * @param score the score of the game session
    */
-  public void setScore(String score) {
+  public void setScore(Map<String, Object> score) {
     this.score = score;
   }
 
