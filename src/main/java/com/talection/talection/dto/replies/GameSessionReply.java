@@ -3,6 +3,7 @@ package com.talection.talection.dto.replies;
 import com.talection.talection.enums.GameType;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Data Transfer Object for game session replies.
@@ -17,9 +18,9 @@ public class GameSessionReply {
   private Long gameTemplateId;
   private GameType gameType;
   private String gameName;
-  private Date startedAt;
-  private Date endedAt;
-  private String score;
+  private Date startTime;
+  private Date endTime;
+  private Map<String, Object> score;
   
   /**
    * Gets the ID of the game session.
@@ -71,8 +72,8 @@ public class GameSessionReply {
    * 
    * @return the start time of the game session
    */
-  public Date getStartedAt() {
-    return startedAt;
+  public Date getStartTime() {
+    return startTime;
   }
 
   /**
@@ -80,16 +81,16 @@ public class GameSessionReply {
    * 
    * @return the end time of the game session
    */
-  public Date getEndedAt() {
-    return endedAt;
+  public Date getEndTime() {
+    return endTime;
   }
 
   /**
-   * Gets the score of the game session.
-   * 
-   * @return the score of the game session
+   * Gets the game-specific result values of the game session.
+   *
+   * @return the score values of the game session
    */
-  public String getScore() {
+  public Map<String, Object> getScore() {
     return score;
   }
 
@@ -141,27 +142,27 @@ public class GameSessionReply {
   /**
    * Sets the start time of the game session.
    *
-   * @param startedAt the start time to set for the game session
+   * @param startTime the start time to set for the game session
    */
-  public void setStartedAt(Date startedAt) {
-    this.startedAt = startedAt;
+  public void setStartTime(Date startTime) {
+    this.startTime = startTime;
   }
 
   /**
    * Sets the end time of the game session.
    *
-   * @param endedAt the end time to set for the game session
+   * @param endTime the end time to set for the game session
    */
-  public void setEndedAt(Date endedAt) {
-    this.endedAt = endedAt;
+  public void setEndTime(Date endTime) {
+    this.endTime = endTime;
   }
 
   /**
-   * Sets the score of the game session.
+   * Sets the game-specific result values of the game session.
    *
-   * @param score the score to set for the game session
+   * @param score the score values to set for the game session
    */
-  public void setScore(String score) {
+  public void setScore(Map<String, Object> score) {
     this.score = score;
   }
 }
