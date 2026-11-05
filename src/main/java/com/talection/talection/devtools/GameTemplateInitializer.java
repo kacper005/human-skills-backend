@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataAccessException;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -16,9 +16,10 @@ import java.util.Map;
 /**
  * Seeds one game template per game type, so that game sessions can be saved
  * without an admin having to create the templates manually.
+ * Runs in every profile, since the templates are required reference data and
+ * only missing game types are inserted.
  */
 @Component
-@Profile("dev")
 public class GameTemplateInitializer implements ApplicationListener<ApplicationReadyEvent> {
     private static final Logger logger = LoggerFactory.getLogger(GameTemplateInitializer.class);
 
@@ -51,8 +52,15 @@ public class GameTemplateInitializer implements ApplicationListener<ApplicationR
             template.setName(def.name());
             template.setDescription(def.description());
             template.setActive(true);
-            gameTemplateRepository.save(template);
-            logger.info("Game template initialized for game type: {}", gameType);
+
+            // A failed seed must not stop the application from starting
+            try {
+                gameTemplateRepository.save(template);
+                logger.info("Game template initialized for game type: {}", gameType);
+            } catch (DataAccessException e) {
+                logger.error("Could not initialize game template for game type {}: {}",
+                        gameType, e.getMostSpecificCause().getMessage());
+            }
         });
     }
 }
