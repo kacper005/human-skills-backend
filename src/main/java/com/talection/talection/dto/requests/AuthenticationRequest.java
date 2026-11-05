@@ -12,7 +12,7 @@ public class AuthenticationRequest {
     private AuthProvider authProvider;
 
     // Optional, used for Google and Feide authentication
-    private String credentialId;
+    private String idToken;
 
     // Optional, used for local authentication
     private String email;
@@ -21,21 +21,21 @@ public class AuthenticationRequest {
     private String password;
 
     /**
-     * Gets the credential ID. This is used for Google and Feide authentication.
+     * Gets the ID token issued by the identity provider. This is used for Google and Feide authentication.
      *
-     * @return the credential ID, which is used for Google and Feide authentication.
+     * @return the ID token, which is used for Google and Feide authentication.
      */
-    public String getCredentialId() {
-        return credentialId;
+    public String getIdToken() {
+        return idToken;
     }
 
     /**
-     * Sets the credential ID. This is used for Google and Feide authentication.
+     * Sets the ID token issued by the identity provider. This is used for Google and Feide authentication.
      *
-     * @param credentialId the credential ID to set, which is used for Google and Feide authentication.
+     * @param idToken the ID token to set, which is used for Google and Feide authentication.
      */
-    public void setCredentialId(String credentialId) {
-        this.credentialId = credentialId;
+    public void setIdToken(String idToken) {
+        this.idToken = idToken;
     }
 
     /**
