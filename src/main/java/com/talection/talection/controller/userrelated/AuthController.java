@@ -112,7 +112,7 @@ public class AuthController {
                 logger.error("Google auth configuration error: {}", e.getMessage());
                 return new ResponseEntity<>("Google auth is not configured", HttpStatus.INTERNAL_SERVER_ERROR);
             } catch (UserNotFoundException e) {
-                logger.error("User not found for Google token: {}", request.getCredentialId());
+                logger.info("No user registered for Google account: {}", e.getMessage());
                 return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
             }
         }
@@ -193,11 +193,11 @@ public class AuthController {
     }
 
     private String authenticateGoogle(AuthenticationRequest request) throws GeneralSecurityException, IOException {
-        if (request.getCredentialId() == null || request.getCredentialId().isBlank()) {
+        if (request.getIdToken() == null || request.getIdToken().isBlank()) {
             throw new IllegalArgumentException("Google ID token must not be null or empty");
         }
 
-        GoogleIdToken.Payload payload = googleTokenVerifier.verifyToken(request.getCredentialId());
+        GoogleIdToken.Payload payload = googleTokenVerifier.verifyToken(request.getIdToken());
         if (payload == null || payload.getEmail() == null || payload.getEmail().isBlank()) {
             throw new IllegalArgumentException("Invalid Google ID token payload");
         }
@@ -213,11 +213,11 @@ public class AuthController {
     }
 
     private String authenticateFeide(AuthenticationRequest request) {
-        if (request.getCredentialId() == null || request.getCredentialId().isBlank()) {
+        if (request.getIdToken() == null || request.getIdToken().isBlank()) {
             throw new IllegalArgumentException("FEIDE ID token must not by null or empty");
         }
 
-        Jwt jwt = feideTokenVerifier.verifyToken(request.getCredentialId());
+        Jwt jwt = feideTokenVerifier.verifyToken(request.getIdToken());
 
         String email = jwt.getClaimAsString("email"); 
         if (email == null || email.isBlank()) {

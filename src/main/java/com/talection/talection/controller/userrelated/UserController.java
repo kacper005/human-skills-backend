@@ -78,6 +78,9 @@ public class UserController {
         } catch (GeneralSecurityException | IOException e) {
             logger.error("Error verifying Google ID token: {}", e.getMessage());
             return ResponseEntity.badRequest().body("Invalid Google ID token");
+        } catch (IllegalStateException e) {
+            logger.error("Sign-up provider configuration error: {}", e.getMessage());
+            return ResponseEntity.status(500).body("Sign-up provider is not configured");
         }
     }
 
@@ -101,13 +104,23 @@ public class UserController {
 
                 GoogleIdToken.Payload payload = googleTokenVerifier.verifyToken(request.getIdToken());
 
+                // The email is used as the username, so it must come from the verified token
+                if (payload.getEmail() == null || !Boolean.TRUE.equals(payload.getEmailVerified())) {
+                    throw new IllegalArgumentException("Google account does not have a verified email");
+                }
+
+                String firstName = firstNonBlank(request.getFirstName(), (String) payload.get("given_name"));
+                String lastName = firstNonBlank(request.getLastName(), (String) payload.get("family_name"));
+                if (firstName == null || lastName == null) {
+                    throw new IllegalArgumentException("First and last name are required for Google sign-up");
+                }
+
                 User user = buildBaseUser(request);
                 user.setAuthProvider(AuthProvider.GOOGLE);
                 user.setCredentialId("google:" + payload.getSubject()); // Use Google user ID as credential ID
-
-                if (user.getEmail() == null || user.getEmail().isBlank()) {
-                    user.setEmail(payload.getEmail()); // Fallback to email from token if not provided in request
-                }
+                user.setEmail(payload.getEmail());
+                user.setFirstName(firstName);
+                user.setLastName(lastName);
 
                 return userService.addUser(user, null); // No password for Google users
             }
@@ -118,8 +131,19 @@ public class UserController {
                 user.setFirstName(request.getFirstName());
                 user.setLastName(request.getLastName());
                 user.setEmail(request.getEmail());
-                user.setGender(request.getGender());
+                if (request.getGender() != null) {
+                    user.setGender(request.getGender());
+                }
                 return user;
+            }
+
+            private static String firstNonBlank(String... values) {
+                for (String value : values) {
+                    if (value != null && !value.isBlank()) {
+                        return value;
+                    }
+                }
+                return null;
             }
 
     private Long addFeideUser(SignUpRequest request)

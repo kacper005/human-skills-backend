@@ -40,7 +40,7 @@ public class GoogleTokenVerifier {
 
         GoogleIdToken idToken = verifier.verify(idTokenString);
         if (idToken == null) {
-            throw new SecurityException("Invalid ID token");
+            throw new IllegalArgumentException("Invalid ID token");
         }
         return idToken.getPayload();
     }
